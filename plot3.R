@@ -21,19 +21,24 @@ unzip("Emissiondata.zip", exdir = ".")
 NEI <- readRDS("summarySCC_PM25.rds") # emissions data
 SCC <- readRDS("Source_Classification_Code.rds") # source classifications code
 
-
-# FROM PLOT 2
 # Make a dataframe containing only data of fips 24510 (Baltimore City)
 baltimore <- subset(NEI, fips=="24510")
 
-# Calculate the mean PM2.5 emission per year
-meanbaltimore <-with(baltimore2, aggregate(Emissions, by=list(year),mean,na.rm=TRUE)) 
+# Load packages
+library(ggplot2)
+library(dplyr)
+
+# Create a dataframe with mean emissions per year and type
+summarybaltimore <- baltimore %>% 
+    group_by(type = as.factor(type),year = as.factor(year)) %>% 
+    summarise(Emissions = mean(Emissions))
 
 # Open a connection in which the plot will be saved
-png("plot2.png", width = 480, height = 480)
+png("plot3.png", width = 680, height = 480)
 
-# Plot the summed emissions
-plot(meanbaltimore,xlab="Year",ylab="PM2.5 emission",main="Mean Baltimore City PM2.5 emissions from 1999 to 2008",pch=20,cex=2,col="purple")
+# Plot
+g <- ggplot(summarybaltimore, aes(year,Emissions))
+g+geom_point(colour = "darkgreen", size = 2)+facet_grid(.~type,margins=FALSE)+ ggtitle("Baltimore City emissions per year and source")
 
 # Close the connection
 dev.off()
