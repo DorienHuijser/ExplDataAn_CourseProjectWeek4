@@ -21,11 +21,7 @@ NEI <- readRDS("summarySCC_PM25.rds") # emissions data
 SCC <- readRDS("Source_Classification_Code.rds") # source classifications code
 
 # Sum the emissions for each year
-years <- as.character(unique(NEI$year))
-summedemissions <- NULL
-for(i in 1:length(years)){
-    summedemissions[i] <- sum(NEI$Emissions[NEI$year==years[i]],na.rm=TRUE)
-}
+summedemissions <- with(NEI, tapply(Emissions,year,sum,na.rm=TRUE)) # calculate the mean sample value for each state code
 
 # Open a connection in which the plot will be saved
 png("plot1.png", width = 480, height = 480)
