@@ -1,10 +1,10 @@
 # Exploratory data analysis - Course project week 4
 # Author: Dorien Huijser
-# Date: 2020-
+# Date: 2020-05-22
 
 # Script to create plot5.png
 # Answers the question: How have emissions from motor vehicle sources changed from 1999–2008 in Baltimore City?
-# Plotting system: 
+# Plotting system: ggplot2
 
 # Set working directory (change this to the folder where your original data are located)
 setwd("C:/Users/dorie/Documenten/201912_Coursera_Data_Science_Specialization/4. Exploratory data analysis/Week_4_Course_Project/ExplDataAn_CourseProjectWeek4")
@@ -20,32 +20,28 @@ unzip("Emissiondata.zip", exdir = ".")
 NEI <- readRDS("summarySCC_PM25.rds") # emissions data
 SCC <- readRDS("Source_Classification_Code.rds") # source classifications code
 
+# Select the SCCs with vehicles only in NEI dataframe
+index <- grep('vehicle',SCC$EI.Sector,value=FALSE,ignore.case=TRUE)
+sources <- SCC$SCC[index]
+vehiclesubset <- subset(NEI, SCC %in% sources) # select the relevant sources (rows) in NEI dataframe
 
-# OLD OLD OLD
-# Search for coal-related sources in the SCC data
-index <- grep("coal",SCC$EI.Sector,value=FALSE,ignore.case = TRUE)
-sources <- SCC$SCC[index] # select the sources that we will subset NEI with
+# Select only Baltimore City
+baltimore <- vehiclesubset[vehiclesubset$fips == "24510",] 
 
-coalsubset <- subset(NEI, SCC %in% sources) #select the relevant sources (rows) in NEI dataframe
-
-library(dplyr)
 library(ggplot2)
-summarycoal <- coalsubset %>% 
-    group_by(year = as.factor(year)) %>% 
-    summarise(MeanEmissions = mean(Emissions,na.rm=TRUE),
-              MinEmissions = min(Emissions,na.rm=TRUE),
-              MaxEmissions = max(Emissions, na.rm=TRUE),
-              SDEmissions=sd(Emissions,na.rm=TRUE),
-              sumEmissions = sum(Emissions,na.rm=TRUE))
 
 # Open a connection in which the plot will be saved
-png("plot4.png", width = 480, height = 480)
+png("plot5.png", width = 480, height = 480)
+
+baltimore$year <- as.factor(baltimore$year)
 
 # Plot
-q <- ggplot(summarycoal, aes(year,MeanEmissions))+geom_line() 
-q+geom_point() + geom_errorbar(aes(ymin = MeanEmissions-(SDEmissions/2), ymax=MeanEmissions+(SDEmissions/2)),width=.2,position=position_dodge(0.05)) +
-    labs(title = "Coal-related emissions per year across the US", x = "Year", y = "Mean PM2.5 emissions", caption="Mean PM2.5 emissions. Error bars represent 1 SD") +
-    theme_classic()
+# Violin plot (not great y axis): 
+ggplot(baltimore, aes(x=year, y=Emissions)) + geom_violin(fill="blue") + 
+    stat_summary(fun.y=mean, geom="point", shape=21, size=2, color="red",fill="red") +
+    labs(title = "Vehicle-related emissions per year in Baltimore City", x = "Year", y = "PM2.5 emissions", caption="Violin plot, red dot indicates the mean PM2.5") + 
+    theme_classic() + coord_cartesian(ylim=c(0,7))
+# source for violin plot: http://www.sthda.com/english/wiki/ggplot2-violin-plot-quick-start-guide-r-software-and-data-visualization
 
 # Close the connection
 dev.off()
